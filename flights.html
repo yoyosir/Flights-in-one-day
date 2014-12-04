@@ -1,4 +1,14 @@
 <style>
+
+.d3-tip {
+  line-height: 1;
+  font-weight: bold;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  border-radius: 2px;
+}
+
 .countries {
   fill: #b0d0ab;
   stroke: #6cb0e0;
@@ -36,6 +46,7 @@ x="100" y="100"
       fill="red">22:00</text>
 </font>
 <script src="d3/d3.v3.min.js"></script>
+<script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
 <script src="http://d3js.org/topojson.v1.min.js"></script>
 <script src="http://d3js.org/queue.v1.min.js"></script>
 <script>
@@ -117,14 +128,30 @@ function loaded(error, countries, airports) {
      .append("path")
      .attr("d", path);
 
+var tip = d3.tip()
+  .attr('class', "d3-tip")
+  .offset([-10, 0])
+  .html(function(d) {
+    return "<strong>Airport:</strong> <span class='values'>" + d.id + "</span><br>"
+         + "<strong>In degree:</strong> <span class='values'>" + d.properties.indegree + "</span><br>" 
+         + "<strong>Out degree:</strong> <span class='values'>" + d.properties.outdegree + "</span><br>"
+         + "<strong>Degree:</strong> <span class='values'>" + d.properties.degree + "</span><br>"
+         + "<strong>Betweenness Centrality:</strong> <span class='values'>" + d.properties.betweenness + "</span><br>"
+         + "<strong>Category:</strong> <span class='values'>" + d.properties.category + "</span><br>";
+  })
+
+svg.call(tip);
+
   svg.append("g")
      .attr("class", "airports")
      .selectAll("path")
      .data(topojson.feature(airports, airports.objects.airports).features)
      .enter()
      .append("path")
-     .attr("id", function(d) {return d.id;})
-     .attr("d", path);
+     .attr("id", function(d) {console.log(d); return d.id;})
+     .attr("d", path)
+     .on('mouseover', tip.show)
+     .on('mouseout', tip.hide);
     var geos = topojson.feature(airports, airports.objects.airports).features;
     for (i in geos) {
       airportMap[geos[i].id] = geos[i].geometry.coordinates;
@@ -150,12 +177,12 @@ function loaded(error, countries, airports) {
         i = 0;
       }
       var od = pairs[i];
-      console.log(od[2]);
+      //console.log(od[2]);
       setTimeout(function() {
           fly(od[0], od[1], od[3] - od[2]);
       }, od[2]);
       i++;
-    }, 0);
+    }, 50);
     setInterval(function() {
         var interval = Date.now() - start_time;
         if (interval - last >= 1800) {
@@ -176,6 +203,22 @@ function loaded(error, countries, airports) {
             d3.select(".time").text(str);
         }
     }, 800);
+    var airport_data = [];
+    d3.tsv("ordered_metrics.tsv", function(error, data) {
+        data.forEach(function(d) {
+            var map = {};
+            map.Label = d.Label;
+            map.InDegree = d.InDegree;
+            map.OutDegree = d.OutDegree;
+            map.Degree = d.Degree;
+            map.BetweennessCentrality = d.BetweennessCentrality;
+            map.Category = d.Category;
+            // console.log(map.Category);
+            airport_data.push(map);
+        });
+    });
+    console.log(airport_data);
+    //console.log(svg.selectAll(".airport").enter().data(airport_data).attr("x", function(d) { console.log(d.Label); return d.Label; }));
 }
 
 queue().defer(d3.json, "countries.topo.json")
