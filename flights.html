@@ -150,12 +150,21 @@ svg.call(tip);
      .append("path")
      .attr("id", function(d) {console.log(d); return d.id;})
      .attr("d", path)
+     .style("fill", function(d) {
+            if (d.properties.category == 'Aviation Hub') return "red";
+            if (d.properties.category == 'Important Gateway') return "purple";
+            if (d.properties.category == 'Important Origin & Destination') return "green";
+            if (d.properties.category == 'Important Destination') return "#191970";
+
+            return "#00bfff";
+         })
      .on('mouseover', tip.show)
      .on('mouseout', tip.hide);
     var geos = topojson.feature(airports, airports.objects.airports).features;
     for (i in geos) {
       airportMap[geos[i].id] = geos[i].geometry.coordinates;
     }
+
 
     var pairs = [];
     d3.tsv("schedule.tsv", function(error, data) {
@@ -182,7 +191,7 @@ svg.call(tip);
           fly(od[0], od[1], od[3] - od[2]);
       }, od[2]);
       i++;
-    }, 50);
+    }, 100);
     setInterval(function() {
         var interval = Date.now() - start_time;
         if (interval - last >= 1800) {
@@ -203,6 +212,8 @@ svg.call(tip);
             d3.select(".time").text(str);
         }
     }, 800);
+
+    /*
     var airport_data = [];
     d3.tsv("ordered_metrics.tsv", function(error, data) {
         data.forEach(function(d) {
@@ -219,6 +230,8 @@ svg.call(tip);
     });
     console.log(airport_data);
     //console.log(svg.selectAll(".airport").enter().data(airport_data).attr("x", function(d) { console.log(d.Label); return d.Label; }));
+
+    */
 }
 
 queue().defer(d3.json, "countries.topo.json")
